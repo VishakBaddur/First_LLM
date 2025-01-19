@@ -134,7 +134,7 @@ st.title("Code Generator & Analyzer")
 
 # Initialize the tool in session state if it doesn't exist
 if 'tool' not in st.session_state:
-    model_path = "models/mistral-7b-instruct-v0.1.Q4_K_M.gguf"
+    model_path = os.getenv('MODEL_PATH', "models/mistral-7b-instruct-v0.1.Q4_K_M.gguf")
     st.session_state.tool = InteractiveCodeTools(model_path)
 
 # Create sidebar for main operation choice
