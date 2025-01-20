@@ -2,43 +2,61 @@ import streamlit as st
 import os
 from typing import Dict, List, Optional, Tuple
 from llama_cpp import Llama
+import wget
+import time
+
+def download_model_if_needed():
+    """Download the model if it's not present and show progress."""
+    model_dir = "models"
+    model_path = os.path.join(model_dir, "mistral-7b-instruct-v0.1.Q4_K_M.gguf")
+    
+    if not os.path.exists(model_path):
+        try:
+            st.info("Downloading model... This may take a few minutes.")
+            progress_bar = st.progress(0)
+            os.makedirs(model_dir, exist_ok=True)
+            
+            model_url = "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF/resolve/main/mistral-7b-instruct-v0.1.Q4_K_M.gguf"
+            
+            # Custom hook for download progress
+            def download_progress(current, total, width=80):
+                progress = float(current) / float(total)
+                progress_bar.progress(progress)
+            
+            wget.download(model_url, model_path, bar=download_progress)
+            progress_bar.progress(1.0)
+            st.success("Model downloaded successfully!")
+            
+        except Exception as e:
+            st.error(f"Error downloading model: {str(e)}")
+            return None
+            
+    return model_path
 
 class InteractiveCodeTools:
-    def __init__(self, model_path: str = "mistral-7b-instruct-v0.1.Q4_K_M.gguf"):
+    def __init__(self, model_path: str = "models/mistral-7b-instruct-v0.1.Q4_K_M.gguf"):
         """Initialize the CodeTools with local Mistral model."""
-        if not os.path.exists(model_path):
-            self.download_model()
+        self.model_path = model_path
         
-        self.llm = Llama(
-            model_path=model_path,
-            n_ctx=8192,
-            n_threads=4,
-            n_gpu_layers=0
-        )
+        try:
+            self.llm = Llama(
+                model_path=model_path,
+                n_ctx=8192,
+                n_threads=4,
+                n_gpu_layers=0
+            )
+        except Exception as e:
+            st.error(f"Error initializing model: {str(e)}")
+            raise e
         
         self.supported_languages = {
-            "1": "Python",
-            "2": "JavaScript",
-            "3": "Java",
-            "4": "HTML/CSS",
-            "5": "React",
-            "6": "Node.js"
+            "Python": "Python",
+            "JavaScript": "JavaScript",
+            "Java": "Java",
+            "HTML/CSS": "HTML/CSS",
+            "React": "React",
+            "Node.js": "Node.js"
         }
-
-    def download_model(self):
-        """Download the Mistral model if not present."""
-        import wget
-        import os
-
-        model_url = "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF/resolve/main/mistral-7b-instruct-v0.1.Q4_K_M.gguf"
-        model_dir = "models"
-        
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
-        
-        print("Downloading Mistral model... This might take a while...")
-        wget.download(model_url, os.path.join(model_dir, "mistral-7b-instruct-v0.1.Q4_K_M.gguf"))
-        print("\nModel downloaded successfully!")
 
     def generate_code(self, language: str, prompt: str) -> str:
         """Generate code based on user requirements."""
@@ -134,8 +152,14 @@ st.title("Code Generator & Analyzer")
 
 # Initialize the tool in session state if it doesn't exist
 if 'tool' not in st.session_state:
-    model_path = os.getenv('MODEL_PATH', "models/mistral-7b-instruct-v0.1.Q4_K_M.gguf")
-    st.session_state.tool = InteractiveCodeTools(model_path)
+    with st.spinner("Initializing the application..."):
+        model_path = download_model_if_needed()
+        if model_path:
+            try:
+                st.session_state.tool = InteractiveCodeTools(model_path)
+            except Exception as e:
+                st.error("Failed to initialize the application. Please try again later.")
+                st.stop()
 
 # Create sidebar for main operation choice
 choice = st.sidebar.radio(
@@ -147,7 +171,7 @@ if choice == "Generate new code from prompt":
     # Language selection
     language = st.sidebar.selectbox(
         "Choose a programming language",
-        list(st.session_state.tool.supported_languages.values())
+        list(st.session_state.tool.supported_languages.keys())
     )
     
     # Get user prompt
@@ -160,9 +184,12 @@ if choice == "Generate new code from prompt":
     if st.button("Generate Code"):
         if prompt:
             with st.spinner("Generating code..."):
-                results = st.session_state.tool.generate_code(language, prompt)
-                st.markdown("### Generated Code and Documentation")
-                st.markdown(results)
+                try:
+                    results = st.session_state.tool.generate_code(language, prompt)
+                    st.markdown("### Generated Code and Documentation")
+                    st.markdown(results)
+                except Exception as e:
+                    st.error(f"Error generating code: {str(e)}")
         else:
             st.warning("Please enter a prompt for code generation.")
 
@@ -170,7 +197,7 @@ else:  # Analyze existing code
     # Language selection
     language = st.sidebar.selectbox(
         "Choose a programming language",
-        list(st.session_state.tool.supported_languages.values())
+        list(st.session_state.tool.supported_languages.keys())
     )
     
     # Code input
@@ -190,11 +217,12 @@ else:  # Analyze existing code
     if st.button("Analyze Code"):
         if code:
             with st.spinner("Analyzing code..."):
-                results = st.session_state.tool.analyze_code(language, code, analysis_type)
-                
-                # Display formatted results
-                for analysis_key, analysis_result in results.items():
-                    with st.expander(f"{analysis_key.title()} Analysis", expanded=True):
-                        st.markdown(analysis_result)
+                try:
+                    results = st.session_state.tool.analyze_code(language, code, analysis_type)
+                    for analysis_key, analysis_result in results.items():
+                        with st.expander(f"{analysis_key.title()} Analysis", expanded=True):
+                            st.markdown(analysis_result)
+                except Exception as e:
+                    st.error(f"Error analyzing code: {str(e)}")
         else:
             st.warning("Please enter some code to analyze.")
