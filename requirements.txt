@@ -1,3 +1,5 @@
-streamlit
-llama-cpp-python==0.2.54
-wget
+gradio>=3.50.0
+torch
+transformers>=4.33.0
+accelerate
+einops
