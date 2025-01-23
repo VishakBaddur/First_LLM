@@ -1,4 +1,4 @@
-# LLM_app1
+# Interactive Code Tools
 It is an intelligent web application that leverages Microsoft's Phi-2 language model to help developers generate and analyze code across multiple programming languages. 
 
 # Features
