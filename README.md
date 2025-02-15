@@ -30,7 +30,7 @@ Stable internet connection for model download.
 # How It Works
 
 Model Loading: Automatically loads Microsoft's Phi-2 model,
-Prompt Engineering: Crafts intelligent prompts for code generation,
+Prompt Engineering: Craft intelligent prompts for code generation,
 Intelligent Generation: Uses advanced sampling techniques.
 
 Temperature-based randomness,
