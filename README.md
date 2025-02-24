@@ -29,7 +29,7 @@ Stable internet connection for model download.
 
 # How It Works
 
-Model Loading: Automatically loads Microsoft's Phi-2 model,
+Model Loading: Automatically loads Mistral-7b model,
 Prompt Engineering: Craft intelligent prompts for code generation,
 Intelligent Generation: Uses advanced sampling techniques.
 
