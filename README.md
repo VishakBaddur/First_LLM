@@ -1,5 +1,5 @@
 # Interactive Code Tools
-It is an intelligent web application that leverages Microsoft's Phi-2 language model to help developers generate and analyze code across multiple programming languages. 
+It is an intelligent web application that leverages Mistral-7b language model to help developers generate and analyze code across multiple programming languages. 
 
 # Features
 1. Code Generation
